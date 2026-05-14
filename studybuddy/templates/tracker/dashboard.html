@@ -1,0 +1,395 @@
+{% extends 'tracker/base.html' %}
+
+{% load core_tags %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+        <h1>
+            Welcome, {{ user.username }}
+        </h1>
+
+        <h4>
+            🔥 Streak: {{ streak.current_streak }}
+        </h4>
+
+        <h5>
+            ⏱ Today:
+            {{ total_today|time_format }}
+        </h5>
+    </div>
+
+    <a
+        href="{% url 'add_subject' %}"
+        class="btn btn-success"
+    >
+        Add Subject
+    </a>
+
+</div>
+
+
+<!-- TIMER CARD -->
+
+<div class="card shadow mb-4">
+
+    <div class="card-body text-center">
+
+        <h1
+            id="timer-display"
+            class="display-3 mb-3"
+        >
+            00:00:00
+        </h1>
+
+        <h3 id="current-subject">
+            No active session
+        </h3>
+
+        <div class="mt-4 d-flex justify-content-center gap-3">
+
+            <button
+                id="stop-btn"
+                class="btn btn-danger btn-lg"
+                style="display: none;"
+            >
+                Stop Session
+            </button>
+
+            <button
+                id="pomodoro-btn"
+                class="btn btn-warning btn-lg"
+            >
+                🍅 Pomodoro
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- CHART -->
+
+<div class="card shadow mb-4">
+
+    <div class="card-body">
+
+        <h3 class="mb-4">
+            Study Statistics
+        </h3>
+
+        <canvas id="studyChart"></canvas>
+
+    </div>
+
+</div>
+
+
+<!-- SUBJECTS -->
+
+<div class="row">
+
+    {% for subject in subjects %}
+
+        <div class="col-md-4 mb-4">
+
+            <div class="card shadow-sm h-100">
+
+                <div class="card-body d-flex flex-column">
+
+                    <h3 class="mb-3">
+                        {{ subject.name }}
+                    </h3>
+
+                    <div class="mt-auto">
+
+                        <button
+    class="btn btn-primary start-btn w-100 mb-2"
+    data-subject-id="{{ subject.id }}"
+    data-subject-name="{{ subject.name }}"
+    {% if active_session %}disabled{% endif %}
+>
+    ▶ Start Session
+</button>
+
+                        <a
+                            href="{% url 'subject_detail' subject.id %}"
+                            class="btn btn-outline-dark w-100"
+                        >
+                            Details
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    {% empty %}
+
+        <div class="col-12">
+
+            <div class="alert alert-info">
+
+                No subjects yet.
+                Create your first subject 🚀
+
+            </div>
+
+        </div>
+
+    {% endfor %}
+
+</div>
+
+
+
+<!-- CHART JS -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+
+<script>
+
+let timerInterval = null;
+
+let startTimestamp = null;
+
+let pomodoroMode = false;
+
+
+
+const timerDisplay =
+    document.getElementById('timer-display');
+
+const currentSubject =
+    document.getElementById('current-subject');
+
+const stopBtn =
+    document.getElementById('stop-btn');
+
+const pomodoroBtn =
+    document.getElementById('pomodoro-btn');
+
+
+
+/* ======================================
+   FORMAT TIME
+====================================== */
+
+function formatTime(seconds) {
+
+    let hrs = Math.floor(seconds / 3600);
+
+    let mins = Math.floor(
+        (seconds % 3600) / 60
+    );
+
+    let secs = seconds % 60;
+
+    hrs = String(hrs).padStart(2, '0');
+    mins = String(mins).padStart(2, '0');
+    secs = String(secs).padStart(2, '0');
+
+    return `${hrs}:${mins}:${secs}`;
+}
+
+
+
+/* ======================================
+   LIVE TIMER
+====================================== */
+
+function startLiveTimer() {
+
+    timerInterval = setInterval(() => {
+
+        const now = Date.now() / 1000;
+
+        const seconds = Math.floor(
+            now - startTimestamp
+        );
+
+        timerDisplay.innerText =
+            formatTime(seconds);
+
+    }, 1000);
+
+}
+
+
+
+/* ======================================
+   START SESSION
+====================================== */
+
+document.querySelectorAll('.start-btn')
+.forEach(btn => {
+
+    btn.addEventListener('click', async () => {
+
+        const subjectId =
+            btn.dataset.subjectId;
+
+        const subjectName =
+            btn.dataset.subjectName;
+
+        const response = await fetch(
+            `/sessions/start/${subjectId}/`,
+            {
+                method: 'POST',
+
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            }
+        );
+
+        const data = await response.json();
+
+        if (data.success) {
+
+            startTimestamp = data.start_time;
+
+            currentSubject.innerText =
+                subjectName;
+
+            stopBtn.style.display =
+                'inline-block';
+
+            clearInterval(timerInterval);
+
+            startLiveTimer();
+
+        } else {
+
+            alert(data.message);
+
+        }
+
+    });
+
+});
+
+
+
+/* ======================================
+   STOP SESSION
+====================================== */
+
+stopBtn.addEventListener(
+    'click',
+    async () => {
+
+        const response = await fetch(
+            '/sessions/stop/',
+            {
+                method: 'POST',
+
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            }
+        );
+
+        const data = await response.json();
+
+        if (data.success) {
+
+            clearInterval(timerInterval);
+
+            timerDisplay.innerText =
+                '00:00:00';
+
+            currentSubject.innerText =
+                'No active session';
+
+            stopBtn.style.display =
+                'none';
+
+            location.reload();
+
+        }
+
+    }
+);
+
+
+
+/* ======================================
+   POMODORO
+====================================== */
+
+pomodoroBtn.addEventListener(
+    'click',
+    () => {
+
+        if (timerInterval) {
+            clearInterval(timerInterval);
+        }
+
+        pomodoroMode = true;
+
+        let remaining = 25 * 60;
+
+        currentSubject.innerText =
+            '🍅 Pomodoro Focus Session';
+
+        timerInterval = setInterval(() => {
+
+            remaining--;
+
+            timerDisplay.innerText =
+                formatTime(remaining);
+
+            if (remaining <= 0) {
+
+                clearInterval(timerInterval);
+
+                alert(
+                    'Pomodoro session finished!'
+                );
+
+                timerDisplay.innerText =
+                    '00:00:00';
+
+                currentSubject.innerText =
+                    'Take a 5 minute break ☕';
+
+            }
+
+        }, 1000);
+
+    }
+);
+
+
+
+/* ======================================
+   CHART.JS
+====================================== */
+
+const ctx = document.getElementById('studyChart');
+
+new Chart(ctx, {
+    type: 'bar',
+
+    data: {
+        labels: {{ chart_labels|safe }},
+        datasets: [{
+            label: 'Study Time (sec)',
+            data: {{ chart_data|safe }}
+        }]
+    }
+});
+
+</script>
+
+{% endblock %}
