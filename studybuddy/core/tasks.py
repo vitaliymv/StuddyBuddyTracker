@@ -15,15 +15,13 @@ def check_streaks():
     for user in users:
         streak, created = Streak.objects.get_or_create(user=user)
 
-        # 🔍 перевіряємо чи була валідна сесія
         has_valid_session = StudySession.objects.filter(
             user=user,
-            duration__gte=600,  # 10 хв
+            duration__gte=600,
             start_time__date=yesterday
         ).exists()
 
         if has_valid_session:
-            # якщо вчора був активний → продовжуємо streak
             if streak.last_activity_date == yesterday:
                 streak.current_streak += 1
             else:
@@ -35,7 +33,6 @@ def check_streaks():
                 streak.max_streak = streak.current_streak
 
         else:
-            # ❌ streak падає
             streak.current_streak = 0
 
         streak.save()

@@ -13,7 +13,7 @@ class StudySession(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField(null=True, blank=True)
-    duration = models.IntegerField(default=0)  # seconds
+    duration = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.user} - {self.subject}"
