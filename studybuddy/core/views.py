@@ -1,8 +1,11 @@
-from django.shortcuts import get_object_or_404, redirect
-from django.views.generic import TemplateView, CreateView, DetailView, View
+from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
+from django.views.generic import TemplateView, CreateView, DetailView, View, DeleteView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils import timezone
+
+from .forms import RegisterForm
 from .models import Subject, StudySession, Streak
 from .utils import update_streak
 from django.http import JsonResponse
@@ -53,7 +56,6 @@ class AddSubjectView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 class StartSessionView(View):
-
     def post(self, request, subject_id):
 
         subject = get_object_or_404(
@@ -81,13 +83,6 @@ class StartSessionView(View):
             "start_time": session.start_time.timestamp(),
             "subject": subject.name
         })
-
-from django.views import View
-from django.http import JsonResponse
-from django.utils import timezone
-
-from .models import StudySession
-from .utils import update_streak
 
 
 class StopSessionView(View):
@@ -129,21 +124,15 @@ class SubjectDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
         sessions = StudySession.objects.filter(
             subject=self.object
         )
-
         total_time = sum(
             session.duration for session in sessions
         )
-
         context['sessions'] = sessions
         context['total_time'] = total_time
-
         return context
-
-from django.views.generic import DeleteView
 
 class DeleteSubjectView(LoginRequiredMixin, DeleteView):
     model = Subject
@@ -151,11 +140,6 @@ class DeleteSubjectView(LoginRequiredMixin, DeleteView):
 
     def get_queryset(self):
         return Subject.objects.filter(user=self.request.user)
-
-from django.urls import reverse_lazy
-from django.views.generic import CreateView
-from django.contrib.auth.models import User
-from .forms import RegisterForm
 
 class RegisterView(CreateView):
     model = User

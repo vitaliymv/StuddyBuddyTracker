@@ -2,14 +2,8 @@ from django import template
 
 register = template.Library()
 
-
 @register.filter
 def time_format(seconds):
-    """
-    Перетворює секунди у формат:
-    2h 15m 10s
-    """
-
     if not seconds:
         return "0s"
 

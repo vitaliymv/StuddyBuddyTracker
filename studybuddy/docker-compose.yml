@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+
+  web:
+    build: .
+    container_name: study_tracker_web
+
+    command: python manage.py runserver 0.0.0.0:8000
+
+    volumes:
+      - .:/app
+
+    ports:
+      - "8000:8000"
+
+    depends_on:
+      - redis
+
+  celery:
+    build: .
+    container_name: study_tracker_celery
+
+    command: celery -A study_tracker worker -l info
+
+    volumes:
+      - .:/app
+
+    depends_on:
+      - redis
+
+  beat:
+    build: .
+    container_name: study_tracker_beat
+
+    command: celery -A study_tracker beat -l info
+
+    volumes:
+      - .:/app
+
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+
+    container_name: study_tracker_redis
+
+    ports:
+      - "6379:6379"
