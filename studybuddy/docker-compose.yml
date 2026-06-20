@@ -4,7 +4,7 @@ services:
 
   web:
     build: .
-    container_name: study_tracker_web
+    container_name: studybuddy_web
 
     command: python manage.py runserver 0.0.0.0:8000
 
@@ -19,9 +19,9 @@ services:
 
   celery:
     build: .
-    container_name: study_tracker_celery
+    container_name: studybuddy_celery
 
-    command: celery -A study_tracker worker -l info
+    command: celery -A studybuddy worker -l info
 
     volumes:
       - .:/app
@@ -31,9 +31,9 @@ services:
 
   beat:
     build: .
-    container_name: study_tracker_beat
+    container_name: studybuddy_beat
 
-    command: celery -A study_tracker beat -l info
+    command: celery -A studybuddy beat -l info
 
     volumes:
       - .:/app
@@ -44,7 +44,7 @@ services:
   redis:
     image: redis:7-alpine
 
-    container_name: study_tracker_redis
+    container_name: studybuddy_redis
 
     ports:
       - "6379:6379"

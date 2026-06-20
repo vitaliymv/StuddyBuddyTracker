@@ -117,7 +117,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = 'redis://redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = "json"
@@ -125,7 +126,7 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Europe/Kyiv"
 CELERY_BEAT_SCHEDULE = {
     'check-streaks-every-day': {
-        'task': 'tracker.tasks.check_streaks',
+        'task': 'core.tasks.check_streaks',
         'schedule': 60.0 * 60 * 24,
     },
 }

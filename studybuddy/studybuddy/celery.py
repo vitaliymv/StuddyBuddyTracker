@@ -1,9 +1,9 @@
 import os
 from celery import Celery
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'study_tracker.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'studybuddy.settings')
 
-app = Celery('study_tracker')
+app = Celery('studybuddy')
 
 app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
